@@ -44,11 +44,13 @@ class GroqProvider(LLMProvider):
     provider_name = "groq"
 
     def __init__(self, model: str) -> None:
+        import os
         self.model = model
+        api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY", "")
         self._client = httpx.AsyncClient(
             base_url=settings.groq_base_url,
             headers={
-                "Authorization": f"Bearer {settings.groq_api_key}",
+                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
             timeout=120.0,

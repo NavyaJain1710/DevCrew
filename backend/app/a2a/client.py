@@ -27,18 +27,20 @@ class A2AClient:
     """Client for delegating tasks from CrewAI to Google ADK via A2A Protocol."""
 
     def __init__(self, base_url: Optional[str] = None) -> None:
-        self.base_url = base_url or f"http://localhost:{settings.app_port}"
+        import os
+        port = os.getenv("PORT") or settings.app_port
+        self.base_url = base_url or f"http://127.0.0.1:{port}"
 
     async def fetch_agent_card(self) -> AgentCard:
         """Discover remote agent capabilities by fetching the A2A Agent Card."""
         url = f"{self.base_url}/.well-known/agent.json"
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=3.0) as client:
                 res = await client.get(url)
                 if res.status_code == 200:
                     return AgentCard(**res.json())
         except Exception as e:
-            logger.warning("a2a_card_http_fallback", error=str(e))
+            logger.info("a2a_card_direct_dispatch", reason=str(e))
 
         # Fallback to direct schema generator if server is in early startup
         from app.a2a.server import get_agent_card
@@ -66,19 +68,19 @@ class A2AClient:
             metadata={"delegated_at": time.time()},
         )
 
-        # 1. First attempt HTTP REST A2A protocol endpoint
+        # 1. First attempt HTTP REST A2A protocol endpoint (with fast fallback)
         endpoint = f"{self.base_url}/api/a2a/tasks"
         try:
-            async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+            async with httpx.AsyncClient(timeout=min(5.0, timeout_seconds)) as client:
                 res = await client.post(endpoint, json=req.model_dump())
                 if res.status_code in (200, 202):
                     response = A2ATaskResponse(**res.json())
                     self._record_provenance(response, context)
                     return response.output_payload or {"status": response.status}
         except Exception as http_err:
-            logger.warning("a2a_http_endpoint_fallback", error=str(http_err))
+            logger.info("a2a_direct_server_dispatch", reason=str(http_err))
 
-        # 2. Fallback to direct A2A server router dispatch
+        # 2. Direct in-process A2A server router dispatch
         from app.a2a.server import submit_a2a_task
         response = await submit_a2a_task(req)
         self._record_provenance(response, context)

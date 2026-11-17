@@ -64,10 +64,13 @@ class DevCrewOrchestrationEngine:
 
     def _ensure_initialized(self) -> None:
         if not self._initialized:
-            self.requirement_agent = create_requirement_analyst_agent()
-            self.architect_agent = create_software_architect_agent()
-            self.planner_agent = create_engineering_planner_agent()
-            self.sentinel_agent = create_quality_sentinel_agent()
+            try:
+                self.requirement_agent = create_requirement_analyst_agent()
+                self.architect_agent = create_software_architect_agent()
+                self.planner_agent = create_engineering_planner_agent()
+                self.sentinel_agent = create_quality_sentinel_agent()
+            except Exception as e:
+                logger.warning("crewai_agents_init_warning", error=str(e))
             self._provider = model_router.get_provider(TaskType.PLANNING)
             self._initialized = True
 
