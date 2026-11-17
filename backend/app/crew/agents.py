@@ -33,11 +33,11 @@ def _get_crew_llm() -> Any:
     os.environ["OPENAI_API_KEY"] = api_key
     os.environ["OPENAI_API_BASE"] = base_url
 
-    # Standardize model name for Groq endpoint
     raw_model = settings.primary_model or "llama-3.3-70b-versatile"
     bare_name = raw_model.split("/")[-1]
 
     try:
+        from crewai import LLM
         return LLM(
             model=f"groq/{bare_name}",
             api_key=api_key,
@@ -46,6 +46,7 @@ def _get_crew_llm() -> Any:
     except Exception as e:
         logger.warning("crew_llm_groq_prefix_failed", error=str(e), model=bare_name)
         try:
+            from crewai import LLM
             return LLM(
                 model=f"openai/{bare_name}",
                 base_url=base_url,
@@ -57,76 +58,96 @@ def _get_crew_llm() -> Any:
             return None
 
 
-def create_requirement_analyst_agent() -> Agent:
+def create_requirement_analyst_agent() -> Any:
     """CrewAI agent for requirement engineering and specification."""
-    kwargs = {
-        "role": "Senior Requirement Analyst",
-        "goal": "Deconstruct natural language user requirements into detailed, unambiguous specifications.",
-        "backstory": (
-            "You are a principal business systems analyst with 15 years of experience. "
-            "You extract functional requirements, non-functional requirements, acceptance criteria, "
-            "and user personas, eliminating ambiguity before software design begins."
-        ),
-        "verbose": True,
-        "allow_delegation": False,
-    }
-    llm = _get_crew_llm()
-    if llm is not None:
-        kwargs["llm"] = llm
-    return Agent(**kwargs)
+    try:
+        from crewai import Agent
+        kwargs = {
+            "role": "Senior Requirement Analyst",
+            "goal": "Deconstruct natural language user requirements into detailed, unambiguous specifications.",
+            "backstory": (
+                "You are a principal business systems analyst with 15 years of experience. "
+                "You extract functional requirements, non-functional requirements, acceptance criteria, "
+                "and user personas, eliminating ambiguity before software design begins."
+            ),
+            "verbose": True,
+            "allow_delegation": False,
+        }
+        llm = _get_crew_llm()
+        if llm is not None:
+            kwargs["llm"] = llm
+        return Agent(**kwargs)
+    except Exception as e:
+        logger.warning("agent_init_fallback", agent="RequirementAnalyst", error=str(e))
+        return None
 
 
-def create_software_architect_agent() -> Agent:
+def create_software_architect_agent() -> Any:
     """CrewAI agent for technical architecture and data modeling."""
-    kwargs = {
-        "role": "Principal Software Architect",
-        "goal": "Design robust, scalable system architectures, API schemas, and data models.",
-        "backstory": (
-            "You are an elite software architect who champions clean architecture, "
-            "SOLID principles, security-by-design, and modular RESTful APIs. "
-            "You design practical schemas and clear module boundaries."
-        ),
-        "verbose": True,
-        "allow_delegation": False,
-    }
-    llm = _get_crew_llm()
-    if llm is not None:
-        kwargs["llm"] = llm
-    return Agent(**kwargs)
+    try:
+        from crewai import Agent
+        kwargs = {
+            "role": "Principal Software Architect",
+            "goal": "Design robust, scalable system architectures, API schemas, and data models.",
+            "backstory": (
+                "You are an elite software architect who champions clean architecture, "
+                "SOLID principles, security-by-design, and modular RESTful APIs. "
+                "You design practical schemas and clear module boundaries."
+            ),
+            "verbose": True,
+            "allow_delegation": False,
+        }
+        llm = _get_crew_llm()
+        if llm is not None:
+            kwargs["llm"] = llm
+        return Agent(**kwargs)
+    except Exception as e:
+        logger.warning("agent_init_fallback", agent="SoftwareArchitect", error=str(e))
+        return None
 
 
-def create_engineering_planner_agent() -> Agent:
+def create_engineering_planner_agent() -> Any:
     """CrewAI agent for task planning, dependencies, and delegation."""
-    kwargs = {
-        "role": "Engineering Project Lead",
-        "goal": "Formulate sequential task dependency graphs and delegate tasks via A2A protocol.",
-        "backstory": (
-            "You are a technical delivery lead coordinating multi-agent workflows. "
-            "You structure tasks with clear acceptance criteria and delegate code synthesis "
-            "to specialist agents via the A2A protocol."
-        ),
-        "verbose": True,
-        "allow_delegation": True,
-    }
-    llm = _get_crew_llm()
-    if llm is not None:
-        kwargs["llm"] = llm
-    return Agent(**kwargs)
+    try:
+        from crewai import Agent
+        kwargs = {
+            "role": "Engineering Project Lead",
+            "goal": "Formulate sequential task dependency graphs and delegate tasks via A2A protocol.",
+            "backstory": (
+                "You are a technical delivery lead coordinating multi-agent workflows. "
+                "You structure tasks with clear acceptance criteria and delegate code synthesis "
+                "to specialist agents via the A2A protocol."
+            ),
+            "verbose": True,
+            "allow_delegation": True,
+        }
+        llm = _get_crew_llm()
+        if llm is not None:
+            kwargs["llm"] = llm
+        return Agent(**kwargs)
+    except Exception as e:
+        logger.warning("agent_init_fallback", agent="EngineeringPlanner", error=str(e))
+        return None
 
 
-def create_quality_sentinel_agent() -> Agent:
+def create_quality_sentinel_agent() -> Any:
     """CrewAI agent for security scanning, linting, and comprehensive review."""
-    kwargs = {
-        "role": "Principal Quality & Security Auditor",
-        "goal": "Rigourously inspect generated code for security vulnerabilities, OWASP flaws, and code smell.",
-        "backstory": (
-            "You are a DevSecOps auditor. You review code for SQL injection, path traversal, "
-            "secret leakage, and code quality. You only approve implementations that pass all safety bars."
-        ),
-        "verbose": True,
-        "allow_delegation": False,
-    }
-    llm = _get_crew_llm()
-    if llm is not None:
-        kwargs["llm"] = llm
-    return Agent(**kwargs)
+    try:
+        from crewai import Agent
+        kwargs = {
+            "role": "Principal Quality & Security Auditor",
+            "goal": "Rigourously inspect generated code for security vulnerabilities, OWASP flaws, and code smell.",
+            "backstory": (
+                "You are a DevSecOps auditor. You review code for SQL injection, path traversal, "
+                "secret leakage, and code quality. You only approve implementations that pass all safety bars."
+            ),
+            "verbose": True,
+            "allow_delegation": False,
+        }
+        llm = _get_crew_llm()
+        if llm is not None:
+            kwargs["llm"] = llm
+        return Agent(**kwargs)
+    except Exception as e:
+        logger.warning("agent_init_fallback", agent="QualitySentinel", error=str(e))
+        return None
