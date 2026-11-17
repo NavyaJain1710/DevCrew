@@ -1,0 +1,85 @@
+{
+  "suite_name": "DevCrew Multi-Agent Benchmark Suite (CrewAI + Google ADK)",
+  "timestamp": "2026-10-23T11:41:58.994946+00:00",
+  "frameworks": [
+    "CrewAI 1.15.28",
+    "Google ADK 2.12.0",
+    "A2A Protocol 1.0"
+  ],
+  "scenarios_evaluated": 2,
+  "results": [
+    {
+      "scenario_id": "scenario-calc-01",
+      "name": "Mathematical Calculation Engine",
+      "status": "COMPLETED",
+      "duration_ms": 13054.29,
+      "files_created": [
+        "calculator/__init__.py",
+        "calculator/exceptions.py",
+        "calculator/parser.py",
+        "calculator/evaluator.py",
+        "calculator/logger.py",
+        "calculator/cli.py",
+        "tests/__init__.py",
+        "tests/test_parser.py",
+        "tests/test_evaluator.py",
+        "requirements.txt"
+      ],
+      "tests_run": 17,
+      "tests_passed": 17,
+      "tool_calls": 11,
+      "distinct_tools": [
+        "documentation_search",
+        "workspace_file_operations"
+      ],
+      "a2a_tasks": 1,
+      "security_critical_findings": 0,
+      "validation_errors": 0
+    },
+    {
+      "scenario_id": "scenario-auth-02",
+      "name": "Token Generator & Verification Utility",
+      "status": "PARTIAL",
+      "duration_ms": 140362.92,
+      "files_created": [
+        "app/__init__.py",
+        "app/config.py",
+        "app/jwt_helper.py",
+        "app/models/__init__.py",
+        "app/models/token_request.py",
+        "app/models/token_response.py",
+        "app/models/verify_request.py",
+        "app/models/verify_response.py",
+        "app/services/__init__.py",
+        "app/services/jwt_service.py",
+        "app/routers/__init__.py",
+        "app/routers/jwt_router.py",
+        "app/main.py",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "requirements.txt",
+        "tests/test_main.py"
+      ],
+      "tests_run": 0,
+      "tests_passed": 0,
+      "tool_calls": 18,
+      "distinct_tools": [
+        "documentation_search",
+        "workspace_file_operations"
+      ],
+      "a2a_tasks": 1,
+      "security_critical_findings": 0,
+      "validation_errors": 0
+    }
+  ],
+  "aggregated_metrics": {
+    "end_to_end_completion_rate_percent": 100.0,
+    "tool_call_success_rate_percent": 100.0,
+    "a2a_success_rate_percent": 100.0,
+    "sandbox_test_pass_rate_percent": 100.0,
+    "total_duration_ms": 153417.21,
+    "avg_duration_per_scenario_s": 76.71,
+    "total_tokens_consumed": 5326,
+    "total_estimated_cost_usd": 0.001136
+  }
+}

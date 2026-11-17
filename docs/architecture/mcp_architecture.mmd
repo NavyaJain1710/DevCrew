@@ -1,0 +1,56 @@
+flowchart TD
+    subgraph AgentClient["Agent Calling Layer"]
+        ADKAgent["Google ADK Autonomous Agent"]
+        CrewAgent["CrewAI Tool Invoker"]
+        MCPClient["MCPClient (Singleton)"]
+    end
+
+    subgraph Validation["Security & Schema Validation"]
+        SchemaValidator["Input Schema Validator (Type & Required Field Check)"]
+        PathSanitizer["SecurityGuard.validate_safe_path (Path Traversal Guard)"]
+    end
+
+    subgraph MCPServer["FastMCP Tool Server & Registry"]
+        ToolDiscovery["Dynamic Discovery Engine (inspect.signature -> JSON Schema)"]
+        ToolRegistry["Tool Registry (Dynamic Mapping)"]
+    end
+
+    subgraph RealTools["Functional External MCP Tools"]
+        subgraph ToolFS["1. workspace_file_operations"]
+            ReadAction["read_file"]
+            WriteAction["write_file"]
+            ListAction["list_files"]
+            InfoAction["file_info"]
+        end
+        
+        subgraph ToolDocs["2. documentation_search"]
+            PythonDocs["Python Standard & Asyncio Specs"]
+            FastAPIDocs["FastAPI & Pydantic Patterns"]
+            ReactDocs["React & Vite Guidelines"]
+            SecurityDocs["OWASP & Container Security"]
+        end
+    end
+
+    subgraph FileSystem["Workspace Storage"]
+        TargetWorkspace["Project Workspace Directory (/workspaces/{project_id})"]
+    end
+
+    ADKAgent -->|Request Available Tools| MCPClient
+    CrewAgent -->|Request Available Tools| MCPClient
+    MCPClient -->|Introspect| ToolDiscovery
+    ToolDiscovery --> ToolRegistry
+    ToolRegistry -->> MCPClient: List of Tool Schemas & Descriptions
+
+    ADKAgent -->|Invoke Tool(name, args)| MCPClient
+    MCPClient --> SchemaValidator
+    SchemaValidator --> PathSanitizer
+
+    PathSanitizer -->|workspace_file_operations| ToolFS
+    PathSanitizer -->|documentation_search| ToolDocs
+
+    ToolFS -->|Confined I/O| TargetWorkspace
+    ToolDocs -->|Synthesize & Return Docs| MCPClient
+
+    MCPClient -->|Log Telemetry duration_ms| AuditLog["Structured structlog Logger"]
+    MCPClient -->> ADKAgent: Validated Pydantic Tool Result
+

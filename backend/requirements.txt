@@ -1,0 +1,86 @@
+# ─── Web Framework ───────────────────────────────────────────────────────────
+fastapi>=0.115.6
+uvicorn[standard]>=0.32.1
+python-multipart>=0.0.17
+
+# ─── Database ────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.36
+alembic==1.14.0
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+
+# ─── Auth ────────────────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+
+# ─── Config ──────────────────────────────────────────────────────────────────
+pydantic[email]
+pydantic-settings>=2.7.0
+python-dotenv>=1.0.1
+
+# ─── LLM / AI ────────────────────────────────────────────────────────────────
+httpx==0.28.1
+tiktoken>=0.8.0
+
+# ─── Agentic Frameworks (CrewAI + Google ADK) ────────────────────────────────
+crewai>=1.0.0
+google-adk>=2.12.0
+google-genai>=2.0.0
+
+# ─── Model Context Protocol (MCP) ───────────────────────────────────────────
+mcp>=1.2.0
+fastmcp>=0.1.0
+
+# ─── Observability & Tracing ─────────────────────────────────────────────────
+langfuse>=2.50.0
+
+# ─── RAG / Embeddings ────────────────────────────────────────────────────────
+sentence-transformers==3.3.1
+chromadb
+pypdf>=5.0.0
+python-docx>=1.1.0
+reportlab>=4.0.0
+# CPU-only torch — ~200 MB instead of ~4 GB GPU version
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
+
+# ─── Git Tools ───────────────────────────────────────────────────────────────
+gitpython==3.1.43
+PyGithub==2.5.0
+
+# ─── Security Scanning ───────────────────────────────────────────────────────
+bandit==1.8.0
+# semgrep==1.100.0
+pip-audit==2.8.0
+# safety  # removed - causes network issues during Docker build
+
+# ─── File / Execution Tools ──────────────────────────────────────────────────
+aiofiles==24.1.0
+watchfiles==1.0.3
+
+# ─── WebSocket ───────────────────────────────────────────────────────────────
+websockets>=14.1
+
+# ─── Observability / Logging ─────────────────────────────────────────────────
+structlog==24.4.0
+prometheus-client==0.21.1
+
+# ─── Utilities ───────────────────────────────────────────────────────────────
+tenacity==9.0.0
+python-slugify==8.0.4
+jinja2==3.1.5
+PyYAML==6.0.2
+rich
+
+# ─── PDF Generation ──────────────────────────────────────────────────────────
+weasyprint==62.3
+markdown==3.7
+
+# ─── Testing ─────────────────────────────────────────────────────────────────
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+freezegun>=1.5.0
+httpx==0.28.1
+factory-boy==3.3.1

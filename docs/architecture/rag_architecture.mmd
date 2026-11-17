@@ -1,0 +1,53 @@
+flowchart TD
+    subgraph Ingestion["1. Dynamic Document Ingestion & Indexing"]
+        RawDocs["User Uploads / Workspace Source Code\n(.pdf, .docx, .md, .py, .ts, .json, .sql)"]
+        Extractor{"DocumentExtractor\nFormat Dispatcher"}
+        PDFExt["pypdf Page Text Extraction"]
+        DOCXExt["python-docx Paragraph & Table Extraction"]
+        CodeExt["UTF-8 / Latin-1 Stream Extraction"]
+        
+        SHA256["SHA-256 Deduplication Hash"]
+        Chunker["TextChunker\nBounded Sliding Window (500c, 50c overlap)"]
+        Embedder["SentenceTransformer\n(all-MiniLM-L6-v2, 384 dimensions)"]
+        ChromaStore[("ChromaDB Persistent Store\n(devcrew_project_knowledge, HNSW Cosine)")]
+    end
+
+    subgraph Isolation["2. Multi-Tenant Vector Partitioning"]
+        MetaIsolation["Metadata Guardrails:\n- user_id (Tenant Isolation)\n- project_id (Project Boundary)\n- doc_id (Document Lineage)\n- sha256 (Deduplication Key)"]
+    end
+
+    subgraph Retrieval["3. Semantic Vector Search & Grounding"]
+        UserQuery["Agent / User Context Query\n(e.g., 'How is authentication implemented?')"]
+        QueryEncoder["Encode Query to 384d Vector"]
+        ChromaQuery["ChromaDB Vector Retrieval\n(where: user_id AND project_id)"]
+        DistanceNorm["Distance Normalization:\nsimilarity = 1.0 - (dist / 2.0)"]
+        ThresholdFilter{"Similarity Threshold Check\n(score >= 0.35)"}
+        SecurityWrap["SecurityGuard.wrap_untrusted_content\n(Prompt Injection Mitigation)"]
+        RAGRefs["List[RAGReference]\n(filename, chunk_index, score, snippet)"]
+        AgentPrompt["Grounded Agent System Prompt"]
+    end
+
+    RawDocs --> Extractor
+    Extractor -->|ext == .pdf| PDFExt
+    Extractor -->|ext == .docx| DOCXExt
+    Extractor -->|ext in code/text| CodeExt
+
+    PDFExt --> SHA256
+    DOCXExt --> SHA256
+    CodeExt --> SHA256
+
+    SHA256 --> Chunker
+    Chunker --> Embedder
+    Embedder --> ChromaStore
+    ChromaStore --- MetaIsolation
+
+    UserQuery --> QueryEncoder
+    QueryEncoder --> ChromaQuery
+    ChromaStore -.->|Nearest Neighbors| ChromaQuery
+    ChromaQuery --> DistanceNorm
+    DistanceNorm --> ThresholdFilter
+    ThresholdFilter -->|Score >= 0.35| SecurityWrap
+    ThresholdFilter -->|Score < 0.35| Reject["Drop Non-Relevant Chunks"]
+    SecurityWrap --> RAGRefs
+    RAGRefs --> AgentPrompt
+

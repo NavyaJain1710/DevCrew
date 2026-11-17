@@ -1,0 +1,66 @@
+flowchart TD
+    subgraph Init["Phase 1: Initialization"]
+        UserInput["Raw User Input & Parameters"]
+        Guard["SecurityGuard Validation & Sanitization"]
+        ContextInit["Initialize ExecutionContext\n(execution_id, project_id, user_id, workspace_path)"]
+    end
+
+    subgraph CrewAIState["Phase 2: Planning & Analysis"]
+        CrewAIPlanner["CrewAI Planning Agent"]
+        ReqModel["RequirementAnalysis\n(features, architecture_pattern, constraints)"]
+        TaskModel["TaskDecomposition\n(milestones, dependencies, priorities)"]
+    end
+
+    subgraph RAGState["Phase 3: Knowledge Grounding"]
+        RAGRetrieval["ChromaDB Semantic Search"]
+        RAGContext["rag_context: List[RAGReference]\n(filename, score, chunk_snippet)"]
+    end
+
+    subgraph A2AState["Phase 4: Delegation & Execution"]
+        A2ADispatch["A2A Client Task Dispatch"]
+        A2ARecords["a2a_tasks: List[A2ATaskRecord]\n(task_id, target_agent, status)"]
+        GoogleADK["Google ADK Specialist Execution"]
+        MCPCalls["mcp_tool_calls: List[MCPToolCallRecord]\n(tool_name, arguments, result, duration_ms)"]
+    end
+
+    subgraph EvalState["Phase 5: Verification & Auto-Repair"]
+        Pytest["Subprocess Pytest Execution"]
+        TestResults["test_results: TestResultsSummary\n(total, passed, failed, duration_seconds)"]
+        RetryTracker["retry_counts: Dict[str, int]\n(max 3 bounded attempts)"]
+    end
+
+    subgraph FinalState["Phase 6: Final Synthesis & Persistence"]
+        FinalOutput["final_output: FinalExecutionResponse\n(summary, files_created, security_score, cost_usd)"]
+        PostgresAudit[("PostgreSQL Audit Trail\n(projects, agent_tasks, test_runs)")]
+        FrontendStream["SSE Event Hub -> Real-time Frontend UI"]
+    end
+
+    UserInput --> Guard
+    Guard --> ContextInit
+    ContextInit --> CrewAIPlanner
+
+    CrewAIPlanner --> ReqModel
+    CrewAIPlanner --> TaskModel
+    ReqModel --> ContextInit
+    TaskModel --> ContextInit
+
+    ContextInit --> RAGRetrieval
+    RAGRetrieval --> RAGContext
+    RAGContext --> ContextInit
+
+    ContextInit --> A2ADispatch
+    A2ADispatch --> A2ARecords
+    A2ADispatch --> GoogleADK
+
+    GoogleADK --> MCPCalls
+    MCPCalls --> ContextInit
+    GoogleADK --> Pytest
+
+    Pytest --> TestResults
+    TestResults --> RetryTracker
+    RetryTracker --> ContextInit
+
+    ContextInit --> FinalOutput
+    FinalOutput --> PostgresAudit
+    FinalOutput --> FrontendStream
+

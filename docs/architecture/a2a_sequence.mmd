@@ -1,0 +1,51 @@
+sequenceDiagram
+    autonumber
+    participant C as CrewAI Planner Agent
+    participant AC as A2A Client
+    participant AS as A2A Server (FastAPI)
+    participant ADK as Google ADK Specialist
+    participant MCP as FastMCP Tool Registry
+    participant WS as Workspace / Subprocess
+
+    C->>AC: Initiate delegation for Code & Test generation
+    AC->>AS: GET /.well-known/agent.json (Agent Card Discovery)
+    AS-->>AC: 200 OK (Capabilities: code_gen, testing, mcp_tools)
+    
+    AC->>AS: POST /api/a2a/tasks (Submit Task Payload + RAG Context)
+    AS->>AS: Assign Task ID (a2a-<uuid>) & State=SUBMITTED
+    AS-->>AC: 202 Accepted (task_id, status="SUBMITTED")
+    
+    AS->>ADK: Dispatch Execution (task_id, payload)
+    activate ADK
+    ADK->>MCP: Discover Available MCP Tools
+    MCP-->>ADK: Tools: [workspace_file_operations, documentation_search]
+    
+    ADK->>MCP: Execute documentation_search (tech specifications)
+    MCP-->>ADK: Relevant library syntax & best practices
+    
+    ADK->>MCP: Execute workspace_file_operations (write implementation & tests)
+    MCP->>WS: Write source code & test suites to disk
+    WS-->>MCP: File written OK
+    MCP-->>ADK: File write confirmations
+    
+    ADK->>WS: Run Sandboxed Command ("pytest -v --tb=short")
+    WS-->>ADK: Test Execution Output (Pass / Fail exit code)
+    
+    opt If Tests Fail (Evaluator-Optimizer Loop)
+        loop Max 3 Bounded Repairs
+            ADK->>ADK: Analyze Failure Traceback & Formulate Fix
+            ADK->>MCP: Update source file with fix
+            MCP->>WS: Rewrite source code
+            ADK->>WS: Re-run Pytest
+            WS-->>ADK: New Exit Code & Test Results
+        end
+    end
+    
+    ADK-->>AS: Complete Task (CodeArtifacts, TestReport, TokenUsage)
+    deactivate ADK
+    AS->>AS: Set State=COMPLETED & Cache Result
+    
+    AC->>AS: GET /api/a2a/tasks/{task_id} (Poll or Await Result)
+    AS-->>AC: 200 OK (Status=COMPLETED, Payload=Pydantic A2AResponse)
+    AC-->>C: Return Validated A2A Payload to Shared ExecutionContext
+

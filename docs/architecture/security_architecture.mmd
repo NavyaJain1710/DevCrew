@@ -1,0 +1,54 @@
+flowchart TD
+    subgraph UntrustedInputs["Untrusted Input Sources"]
+        UserPrompt["User Prompt / Feature Request"]
+        UploadFile["Uploaded Documents (PDF / DOCX / Code)"]
+        ExternalTool["MCP External Tool Responses"]
+        GenCode["LLM-Generated Source Code"]
+    end
+
+    subgraph GuardrailsEngine["SecurityGuard Defense-in-Depth"]
+        Sanitizer["1. Input Sanitization\n(strip null bytes, control chars, length validation)"]
+        InjectionDetector{"2. Prompt Injection Detector\n(Pattern matching: override system, exfiltrate, jailbreak)"}
+        WrapUntrusted["3. Untrusted Content Wrapping\n(<untrusted_content source='...'> boundaries)"]
+        PathGuard["4. Path Traversal Prevention\n(resolve().is_relative_to(workspace_root))"]
+        SecretRedactor["5. Secret Redactor\n(Regex masking for API keys, JWTs, Passwords)"]
+        CommandAllowlist{"6. Subprocess Allowlist\n(allow: pytest, python; deny: curl, rm -rf, bash)"}
+        HumanApproval{"7. Sensitive Operation Guard\n(Destructive actions require explicit human approval)"}
+    end
+
+    subgraph TrustedExecution["Protected Execution Zones"]
+        AgentPrompt["Agent Working Memory & Prompts"]
+        ChromaStore["Multi-Tenant Vector DB (Filtered by user_id & project_id)"]
+        WorkspaceFS["Isolated Project Filesystem"]
+        SanitizedLogs["Sanitized Observability & Audit Logs"]
+    end
+
+    subgraph SecurityRejection["Security Rejection & Alerts"]
+        RejectBlocked["400 / 403 Security Exception (Audit Log Triggered)"]
+    end
+
+    UserPrompt --> Sanitizer
+    Sanitizer --> InjectionDetector
+    InjectionDetector -->|Detected Attack| RejectBlocked
+    InjectionDetector -->|Clean Input| AgentPrompt
+
+    UploadFile --> WrapUntrusted
+    ExternalTool --> WrapUntrusted
+    WrapUntrusted --> ChromaStore
+
+    GenCode --> PathGuard
+    PathGuard -->|Path Traversal Escape| RejectBlocked
+    PathGuard -->|Contained in Root| WorkspaceFS
+
+    WorkspaceFS --> CommandAllowlist
+    CommandAllowlist -->|Unauthorized Binary| RejectBlocked
+    CommandAllowlist -->|Allowed Test Runner| TestExec["Isolated Subprocess"]
+
+    AgentPrompt --> SecretRedactor
+    TestExec --> SecretRedactor
+    SecretRedactor --> SanitizedLogs
+
+    ProjectsRouter --> HumanApproval
+    HumanApproval -->|Pending Approval| PendingWait["Wait for User Confirmation"]
+    HumanApproval -->|Approved| WorkspaceFS
+

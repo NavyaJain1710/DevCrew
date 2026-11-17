@@ -1,0 +1,70 @@
+sequenceDiagram
+    autonumber
+    actor User as Developer / User
+    participant Frontend as DevCrew Web Dashboard
+    participant API as FastAPI Backend Gateway
+    participant CrewAI as CrewAI Planning Engine
+    participant RAG as Dynamic RAG Service
+    participant A2A as A2A Interoperability Hub
+    participant ADK as Google ADK Autonomous Agent
+    participant MCP as FastMCP Tool Registry
+    participant Sandbox as Isolated Workspace Subprocess
+    participant DB as PostgreSQL Database
+
+    User->>Frontend: Submit Requirement ("Build Task Manager App")
+    Frontend->>API: POST /api/projects/ (Title, Description, Requirement)
+    API->>DB: INSERT into projects (status="CREATED")
+    API-->>Frontend: 201 Created (project_id)
+
+    User->>Frontend: Click "Run Autonomous Pipeline"
+    Frontend->>API: POST /api/projects/{id}/run
+    API->>DB: UPDATE projects (status="ANALYZING")
+    API-->>Frontend: 202 Accepted (Pipeline Started)
+    Frontend->>API: GET /api/projects/{id}/events (Connect SSE Stream)
+
+    rect rgb(20, 30, 48)
+        note over CrewAI, RAG: Planning & Knowledge Grounding
+        API->>CrewAI: Start Multi-Agent Planning
+        CrewAI->>CrewAI: Analyze Requirements & Decompose Tasks
+        CrewAI->>RAG: Retrieve Project Documents & Code Context
+        RAG-->>CrewAI: Return Relevant Chunks (Cosine Similarity >= 0.35)
+    end
+
+    rect rgb(28, 40, 60)
+        note over CrewAI, ADK: Cross-Framework A2A Delegation
+        CrewAI->>A2A: Dispatch A2A Task Request (Task Specification + RAG Context)
+        A2A->>ADK: Invoke Google ADK Specialist Agent (task_id)
+    end
+
+    rect rgb(20, 45, 45)
+        note over ADK, MCP: Code Synthesis via FastMCP Tools
+        ADK->>MCP: Query documentation_search (Python/FastAPI syntax)
+        MCP-->>ADK: Best practices & library specifications
+        ADK->>MCP: Call workspace_file_operations (write models, routers, tests)
+        MCP->>Sandbox: Write files to isolated workspace
+        Sandbox-->>MCP: Files Written OK
+    end
+
+    rect rgb(45, 30, 45)
+        note over ADK, Sandbox: Sandboxed Pytest & Auto-Repair Loop
+        ADK->>Sandbox: Execute "pytest -v --tb=short"
+        Sandbox-->>ADK: Test Output & Exit Code
+        opt On Test Failure (Max 3 Attempts)
+            loop Auto-Repair Loop
+                ADK->>ADK: Diagnose stack trace & generate fix
+                ADK->>MCP: Update source file
+                ADK->>Sandbox: Re-run Pytest
+                Sandbox-->>ADK: Updated Exit Code (0 = Success)
+            end
+        end
+    end
+
+    ADK-->>A2A: Return Final Code Artifacts & Test Summary
+    A2A-->>CrewAI: Return A2A Task Response
+    CrewAI->>CrewAI: Review Code Quality & Security Compliance
+    CrewAI-->>API: Final Structured Output (Pydantic FinalExecutionResponse)
+
+    API->>DB: UPDATE projects (status="COMPLETED", completed_at=now())
+    API->>Frontend: Push SSE Event (event="pipeline_completed", status="COMPLETED")
+    Frontend-->>User: Display Interactive Summary, Files, Tests & Download Button
+

@@ -1,0 +1,74 @@
+{
+  "suite_name": "DevCrew Multi-Agent Benchmark Suite (CrewAI + Google ADK)",
+  "timestamp": "2026-11-13T13:00:26.679908+00:00",
+  "frameworks": [
+    "CrewAI 1.15.28",
+    "Google ADK 2.12.0",
+    "A2A Protocol 1.0"
+  ],
+  "scenarios_evaluated": 2,
+  "results": [
+    {
+      "scenario_id": "scenario-calc-01",
+      "name": "Mathematical Calculation Engine",
+      "status": "PARTIAL",
+      "duration_ms": 223650.92,
+      "files_created": [
+        "calculator/__init__.py",
+        "calculator/arithmetic.py",
+        "calculator/factorial.py",
+        "calculator/cli.py",
+        "calculator/api.py",
+        "calculator/__main__.py",
+        "tests/test_arithmetic.py",
+        "tests/test_factorial.py",
+        "tests/test_cli.py",
+        "tests/test_api.py",
+        "pyproject.toml",
+        "README.md",
+        ".mypy.ini",
+        "requirements.txt"
+      ],
+      "tests_run": 82,
+      "tests_passed": 77,
+      "tool_calls": 15,
+      "distinct_tools": [
+        "documentation_search",
+        "workspace_file_operations"
+      ],
+      "a2a_tasks": 1,
+      "security_critical_findings": 0,
+      "validation_errors": 0
+    },
+    {
+      "scenario_id": "scenario-auth-02",
+      "name": "Token Generator & Verification Utility",
+      "status": "COMPLETED",
+      "duration_ms": 70551.39,
+      "files_created": [
+        "requirements.txt",
+        "tests/test_main.py"
+      ],
+      "tests_run": 1,
+      "tests_passed": 1,
+      "tool_calls": 3,
+      "distinct_tools": [
+        "documentation_search",
+        "workspace_file_operations"
+      ],
+      "a2a_tasks": 1,
+      "security_critical_findings": 0,
+      "validation_errors": 0
+    }
+  ],
+  "aggregated_metrics": {
+    "end_to_end_completion_rate_percent": 100.0,
+    "tool_call_success_rate_percent": 100.0,
+    "a2a_success_rate_percent": 100.0,
+    "sandbox_test_pass_rate_percent": 93.98,
+    "total_duration_ms": 294202.31,
+    "avg_duration_per_scenario_s": 147.1,
+    "total_tokens_consumed": 28938,
+    "total_estimated_cost_usd": 0.017493
+  }
+}

@@ -1,0 +1,54 @@
+flowchart TD
+    subgraph Internet["Public Internet"]
+        Client["Developer / Web Browser"]
+    end
+
+    subgraph Host["Production Docker Host / Cloud VM"]
+        subgraph Ingress["Ingress / Reverse Proxy"]
+            ReverseProxy["Nginx / Cloud Load Balancer\n(TLS Termination, Port 80/443)"]
+        end
+
+        subgraph DockerNetwork["Internal Bridge Network: devcrew-net"]
+            subgraph FrontendContainer["devcrew-frontend (Container)"]
+                FrontendApp["Vite Production Server / Nginx\nPort 5173\nHealth: /"]
+            end
+
+            subgraph BackendContainer["devcrew-backend (Container)"]
+                FastAPIApp["Uvicorn ASGI Server (Python 3.11)\nPort 8000\nHealth: /health"]
+                A2AEndpoint["A2A Protocol Server\n/.well-known/agent.json"]
+                MCPServer["FastMCP Tool Server\n/api/mcp"]
+                RAGEngine["Dynamic RAG Engine\nSentenceTransformers"]
+            end
+
+            subgraph DatabaseContainer["devcrew-db (Container)"]
+                PostgresDB["PostgreSQL 15 (Alpine)\nPort 5432\nHealth: pg_isready"]
+            end
+        end
+
+        subgraph PersistentVolumes["Host Persistent Storage"]
+            PGData[("postgres_data\n(Relational Database State)")]
+            ChromaData[("chroma_db\n(Vector Embeddings & HNSW Indices)")]
+            WorkspacesData[("workspaces\n(Isolated Project Files & Code)")]
+        end
+    end
+
+    subgraph ExternalCloud["External Cloud Services"]
+        LLMProvider["LLM API Providers\n(OpenRouter / Groq / OpenAI)"]
+        LangfuseCloud["Langfuse / OTel Observability\n(Traces, Spans & Cost Metrics)"]
+    end
+
+    Client -->|HTTPS :443| ReverseProxy
+    ReverseProxy -->|Proxy UI :5173| FrontendApp
+    ReverseProxy -->|Proxy API :8000| FastAPIApp
+
+    FrontendApp -.->|API Calls & SSE Stream| FastAPIApp
+
+    FastAPIApp -->|Async SQL (asyncpg)| PostgresDB
+    FastAPIApp -->|Confined File I/O| WorkspacesData
+    FastAPIApp -->|Dense Vector Read/Write| ChromaData
+
+    PostgresDB --> PGData
+
+    FastAPIApp -->|Outbound HTTPS (Bearer Auth)| LLMProvider
+    FastAPIApp -->|Telemetry Traces & Spans| LangfuseCloud
+

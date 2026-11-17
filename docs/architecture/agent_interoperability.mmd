@@ -1,0 +1,43 @@
+flowchart LR
+    subgraph CrewAI["CrewAI Orchestration Domain"]
+        PlannerAgent["Planning Agent (CrewAI)"]
+        ArchitectAgent["Architect Agent (CrewAI)"]
+        Workflow["CrewAI Multi-Agent Pipeline"]
+        CrewState["Local Context & Memory"]
+    end
+
+    subgraph A2A["A2A Official Interoperability Protocol"]
+        AgentCard["Agent Card (/.well-known/agent.json)"]
+        TaskSubmit["Task Request (Pydantic A2AMessage)"]
+        TaskStatus["Task Lifecycle (SUBMITTED -> WORKING -> COMPLETED)"]
+        ResultPayload["A2A Task Result (Code, Tests, Metrics)"]
+    end
+
+    subgraph GoogleADK["Google ADK Specialist Domain"]
+        ADKAgent["Google ADK Autonomous Engineer"]
+        EvaluatorOptimizer["Evaluator-Optimizer Loop (Max 3 Repairs)"]
+        ToolExecutor["ADK MCP Tool Invoker"]
+    end
+
+    subgraph Shared["Central Execution State"]
+        ExecutionContext["ExecutionContext (Pydantic Shared State)"]
+    end
+
+    Workflow --> PlannerAgent
+    PlannerAgent --> ArchitectAgent
+    ArchitectAgent -->|Decomposed Tasks & Deps| ExecutionContext
+
+    ExecutionContext -->|Grounding Requirements| TaskSubmit
+    TaskSubmit -->|Discover Agent Capabilities| AgentCard
+    AgentCard -->|Dispatch Remote Task| ADKAgent
+
+    ADKAgent --> ToolExecutor
+    ADKAgent --> EvaluatorOptimizer
+    EvaluatorOptimizer -->|Iterative Code Refinement| ADKAgent
+
+    ADKAgent -->|Produce Validated Output| ResultPayload
+    ResultPayload --> TaskStatus
+    TaskStatus -->|Cross-Framework Handoff| ExecutionContext
+
+    ExecutionContext -->|Review & Final Report| Workflow
+

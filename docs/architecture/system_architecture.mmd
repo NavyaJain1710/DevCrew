@@ -1,0 +1,79 @@
+flowchart TD
+    subgraph UI["Frontend Layer (React 18 + Vite + TailwindCSS)"]
+        Browser["User Browser / Client Dashboard"]
+        DocTab["Documents & Dynamic RAG UI"]
+        MCPTab["MCP Tool Discovery & Execution UI"]
+        StreamLog["SSE Live Execution Stream"]
+    end
+
+    subgraph Gateway["API Gateway Layer (FastAPI)"]
+        AuthMiddleware["JWT Authentication & RBAC"]
+        Guardrails["SecurityGuard (Prompt Injection & Sanitization)"]
+        ProjectsRouter["/api/projects"]
+        DocsRouter["/api/projects/{id}/documents"]
+        MCPRouter["/api/mcp"]
+        AgentCardEndpoint["/.well-known/agent.json"]
+        SSEHub["/api/projects/{id}/events (SSE)"]
+    end
+
+    subgraph Agents["Multi-Agent Orchestration Layer"]
+        CrewAIPlanner["CrewAI Planning Agent (Manager & Task Decomposer)"]
+        SharedContext["ExecutionContext (Pydantic Shared State)"]
+        A2AClient["A2A Protocol Client"]
+        A2AServer["A2A Agent Server (HTTP Endpoint)"]
+        GoogleADK["Google ADK Specialist Agent (Code Generation & Repair)"]
+    end
+
+    subgraph ToolsAndRAG["Dynamic Tools & Knowledge Retrieval"]
+        RAGService["Dynamic RAG Engine (SentenceTransformer all-MiniLM-L6-v2)"]
+        MCPRegistry["FastMCP Tool Server & Dynamic Registry"]
+        MCPToolFS["workspace_file_operations (Read/Write/List/Inspect)"]
+        MCPToolDoc["documentation_search (Multi-domain Tech Docs)"]
+    end
+
+    subgraph Sandbox["Execution & Sandboxed Testing"]
+        Workspace["Isolated Multi-Tenant Workspace Directory"]
+        PytestRunner["Sandboxed Subprocess Test Execution (Timeout & Allowlist)"]
+    end
+
+    subgraph Persistence["Storage & Observability"]
+        PostgreSQL[("PostgreSQL 15 (Projects, Tasks, Scans, Test Runs)")]
+        ChromaDB[("ChromaDB Persistent Vector Store")]
+        Observability["Centralized Structured Logger & Evaluation Engine"]
+    end
+
+    Browser -->|HTTP / JSON| AuthMiddleware
+    Browser -->|Upload & Vector Query| DocsRouter
+    Browser -->|EventSource| SSEHub
+
+    AuthMiddleware --> Guardrails
+    Guardrails --> ProjectsRouter
+    Guardrails --> DocsRouter
+    Guardrails --> MCPRouter
+
+    ProjectsRouter --> CrewAIPlanner
+    DocsRouter --> RAGService
+    MCPRouter --> MCPRegistry
+
+    CrewAIPlanner -->|Read / Update| SharedContext
+    CrewAIPlanner -->|Retrieve Context| RAGService
+    CrewAIPlanner -->|Delegate Tasks via A2A| A2AClient
+
+    A2AClient -->|JSON-RPC / REST A2A Task| A2AServer
+    A2AServer --> GoogleADK
+    GoogleADK -->|Discover & Execute| MCPRegistry
+    MCPRegistry --> MCPToolFS
+    MCPRegistry --> MCPToolDoc
+    GoogleADK -->|Write Code| Workspace
+    GoogleADK -->|Run Tests & Auto-Repair| PytestRunner
+    PytestRunner --> Workspace
+
+    GoogleADK -->|Structured Result| A2AServer
+    A2AServer -->|A2A Response| A2AClient
+    A2AClient -->|Populate State| SharedContext
+
+    SharedContext -->|Persist Audit| PostgreSQL
+    RAGService -->|Index & Query| ChromaDB
+    Agents -->|Structured Traces & Metrics| Observability
+    Observability -->|Push Events| SSEHub
+
