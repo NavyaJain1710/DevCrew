@@ -171,7 +171,8 @@ def create_app() -> FastAPI:
         return {
             "status": "healthy",
             "service": "devcrew-backend",
-            "version": "1.0.0",
+            "version": "1.0.1",
+            "build": "c85f758-robust",
             "env": settings.app_env,
         }
 

@@ -141,22 +141,29 @@ non_functional_requirements (list), user_roles (list), acceptance_criteria (list
 suggested_tech_stack (list).
 Output valid JSON only.
 """
-            req_resp = await self._provider.generate(
-                prompt=req_prompt,
-                system="You are a Senior Requirement Analyst. Return valid JSON only.",
-                temperature=0.2,
-            )
             try:
+                req_resp = await self._provider.generate(
+                    prompt=req_prompt,
+                    system="You are a Senior Requirement Analyst. Return valid JSON only.",
+                    temperature=0.2,
+                )
                 context.requirements = json.loads(self._extract_json(req_resp.content))
-            except Exception:
+                req_p_tok = req_resp.prompt_tokens or max(1, len(req_prompt) // 4)
+                req_c_tok = req_resp.completion_tokens or max(1, len(req_resp.content) // 4)
+            except Exception as req_err:
+                logger.warning("requirement_analysis_fallback", error=str(req_err))
                 context.requirements = {
                     "project_name": "DevCrew Generated Project",
+                    "problem_statement": context.raw_requirement,
                     "functional_requirements": [context.raw_requirement],
+                    "non_functional_requirements": ["High performance", "Clean modular structure"],
+                    "user_roles": ["Standard User"],
                     "acceptance_criteria": ["System is fully functional and tested."],
+                    "suggested_tech_stack": ["Python", "FastAPI", "Pytest"],
                 }
+                req_p_tok = max(1, len(req_prompt) // 4)
+                req_c_tok = 200
 
-            req_p_tok = req_resp.prompt_tokens or max(1, len(req_prompt) // 4)
-            req_c_tok = req_resp.completion_tokens or max(1, len(req_resp.content) // 4)
             observability.record_tokens(exec_id, req_p_tok, req_c_tok)
             context.record_tokens(req_p_tok, req_c_tok)
             observability.end_span(req_span, status="completed")
@@ -202,21 +209,27 @@ Produce a detailed architecture JSON containing:
 - database_models (list of entities and fields)
 Output valid JSON only.
 """
-            arch_resp = await self._provider.generate(
-                prompt=arch_prompt,
-                system="You are a Principal Software Architect. Return valid JSON only.",
-                temperature=0.2,
-            )
             try:
+                arch_resp = await self._provider.generate(
+                    prompt=arch_prompt,
+                    system="You are a Principal Software Architect. Return valid JSON only.",
+                    temperature=0.2,
+                )
                 context.architecture = json.loads(self._extract_json(arch_resp.content))
-            except Exception:
+                arch_p_tok = arch_resp.prompt_tokens or max(1, len(arch_prompt) // 4)
+                arch_c_tok = arch_resp.completion_tokens or max(1, len(arch_resp.content) // 4)
+            except Exception as arch_err:
+                logger.warning("architecture_fallback", error=str(arch_err))
                 context.architecture = {
                     "architecture_overview": "FastAPI Layered Service Architecture",
                     "tech_stack": ["FastAPI", "Pydantic", "Pytest"],
+                    "backend_structure": "app/main.py, tests/test_main.py",
+                    "api_endpoints": [{"method": "GET", "path": "/", "summary": "Root status"}],
+                    "database_models": [],
                 }
+                arch_p_tok = max(1, len(arch_prompt) // 4)
+                arch_c_tok = 200
 
-            arch_p_tok = arch_resp.prompt_tokens or max(1, len(arch_prompt) // 4)
-            arch_c_tok = arch_resp.completion_tokens or max(1, len(arch_resp.content) // 4)
             observability.record_tokens(exec_id, arch_p_tok, arch_c_tok)
             context.record_tokens(arch_p_tok, arch_c_tok)
             observability.end_span(arch_span, status="completed")
