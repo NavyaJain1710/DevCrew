@@ -55,11 +55,21 @@ class DevCrewOrchestrationEngine:
     """
 
     def __init__(self) -> None:
-        self.requirement_agent = create_requirement_analyst_agent()
-        self.architect_agent = create_software_architect_agent()
-        self.planner_agent = create_engineering_planner_agent()
-        self.sentinel_agent = create_quality_sentinel_agent()
-        self._provider = model_router.get_provider(TaskType.PLANNING)
+        self._initialized = False
+        self.requirement_agent = None
+        self.architect_agent = None
+        self.planner_agent = None
+        self.sentinel_agent = None
+        self._provider = None
+
+    def _ensure_initialized(self) -> None:
+        if not self._initialized:
+            self.requirement_agent = create_requirement_analyst_agent()
+            self.architect_agent = create_software_architect_agent()
+            self.planner_agent = create_engineering_planner_agent()
+            self.sentinel_agent = create_quality_sentinel_agent()
+            self._provider = model_router.get_provider(TaskType.PLANNING)
+            self._initialized = True
 
     async def execute(
         self,
@@ -67,6 +77,7 @@ class DevCrewOrchestrationEngine:
         on_event: Optional[Callable[[str, Dict[str, Any]], Any]] = None,
     ) -> FinalExecutionResponse:
         """Execute the end-to-end multi-agent pipeline."""
+        self._ensure_initialized()
         start_time = time.time()
         exec_id = context.execution_id
         proj_id = context.project_id

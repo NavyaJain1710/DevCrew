@@ -22,9 +22,14 @@ logger = structlog.get_logger(__name__)
 settings = get_settings()
 
 import os
-# Ensure CrewAI has an OPENAI_API_KEY in environment so it doesn't fail import
+# Ensure CrewAI has an OPENAI_API_KEY and base URL in environment so it doesn't fail import
+_groq_key = settings.groq_api_key or os.getenv("GROQ_API_KEY") or "gsk_dummy_key_for_groq"
 if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = settings.groq_api_key or os.getenv("GROQ_API_KEY") or "gsk_dummy_key_for_groq"
+    os.environ["OPENAI_API_KEY"] = _groq_key
+if not os.environ.get("GROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = _groq_key
+if not os.environ.get("OPENAI_API_BASE"):
+    os.environ["OPENAI_API_BASE"] = settings.groq_base_url or "https://api.groq.com/openai/v1"
 
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
