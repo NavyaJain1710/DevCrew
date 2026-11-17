@@ -136,16 +136,32 @@ class RAGService:
     """
 
     def __init__(self, persist_dir: Optional[str] = None) -> None:
-        self.persist_dir = persist_dir or os.getenv("CHROMA_PERSIST_DIR", "/app/chroma_db")
-        os.makedirs(self.persist_dir, exist_ok=True)
-        self._client = chromadb.PersistentClient(path=self.persist_dir)
-        self._collection = self._client.get_or_create_collection(
-            name="devcrew_project_knowledge",
-            metadata={"hnsw:space": "cosine"},
-        )
-        # Lazy-loaded SentenceTransformer for 384-dimensional dense semantic embeddings
+        self.persist_dir = persist_dir or os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
+        self._client = None
+        self._collection_obj = None
         self._model: Optional[SentenceTransformer] = None
-        logger.info("rag_service_initialized", persist_dir=self.persist_dir, collection="devcrew_project_knowledge")
+        logger.info("rag_service_initialized", persist_dir=self.persist_dir)
+
+    @property
+    def _collection(self):
+        """Lazy-loaded ChromaDB collection with memory fallback."""
+        if self._collection_obj is None:
+            try:
+                os.makedirs(self.persist_dir, exist_ok=True)
+                if self._client is None:
+                    self._client = chromadb.PersistentClient(path=self.persist_dir)
+                self._collection_obj = self._client.get_or_create_collection(
+                    name="devcrew_project_knowledge",
+                    metadata={"hnsw:space": "cosine"},
+                )
+            except Exception as e:
+                logger.warning("chroma_persistent_init_failed_using_memory", error=str(e))
+                self._client = chromadb.EphemeralClient()
+                self._collection_obj = self._client.get_or_create_collection(
+                    name="devcrew_project_knowledge",
+                    metadata={"hnsw:space": "cosine"},
+                )
+        return self._collection_obj
 
     @property
     def model(self) -> SentenceTransformer:

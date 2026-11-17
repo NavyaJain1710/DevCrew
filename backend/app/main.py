@@ -34,9 +34,10 @@ async def lifespan(app: FastAPI):
     import os
     os.makedirs(settings.workspace_base_path, exist_ok=True)
 
-    # Auto-create tables on startup
+    # Auto-create tables on startup (with safety timeout)
     try:
-        await create_tables()
+        import asyncio
+        await asyncio.wait_for(create_tables(), timeout=10.0)
         logger.info("database_tables_initialized")
     except Exception as e:
         logger.warning("db_init_warning", error=str(e))
