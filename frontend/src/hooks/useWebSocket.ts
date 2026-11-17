@@ -13,7 +13,15 @@ export type WSEvent = {
 
 type Handler = (event: WSEvent) => void;
 
-const WS_BASE = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8000';
+function getWsUrl(): string {
+  const envWs = import.meta.env.VITE_WS_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'wss://devcrew-backend-snto.onrender.com';
+  }
+  return envWs ?? 'ws://localhost:8000';
+}
+
+const WS_BASE = getWsUrl();
 
 export function useWebSocket(projectId: string | null, onMessage: Handler) {
   const ws = useRef<WebSocket | null>(null);

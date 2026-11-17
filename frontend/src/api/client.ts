@@ -3,7 +3,15 @@
  * All backend communication goes through this module.
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
+function getApiUrl(): string {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'https://devcrew-backend-snto.onrender.com/api';
+  }
+  return envUrl ?? 'http://localhost:8000/api';
+}
+
+const BASE_URL = getApiUrl();
 
 // ── Token management ────────────────────────────────────────────────────────
 
