@@ -22,11 +22,19 @@ logger = structlog.get_logger(__name__)
 settings = get_settings()
 
 
-def _get_crew_llm() -> Optional[LLM]:
+def _get_crew_llm() -> LLM:
     """Provide configured CrewAI LLM pointing to Groq's OpenAI-compatible endpoint."""
+    import os
+    base_url = settings.groq_base_url or "https://api.groq.com/openai/v1"
+    api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY") or "gsk_dummy_key_for_groq"
+
+    # Always ensure OPENAI_API_KEY is in environment for CrewAI native provider check
+    if not os.environ.get("OPENAI_API_KEY"):
+        os.environ["OPENAI_API_KEY"] = api_key
+    if not os.environ.get("OPENAI_API_BASE"):
+        os.environ["OPENAI_API_BASE"] = base_url
+
     try:
-        base_url = settings.groq_base_url or "https://api.groq.com/openai/v1"
-        api_key = settings.groq_api_key or "sk-dummy-key"
         model_name = settings.primary_model
         if not model_name.startswith("openai/"):
             model_name = f"openai/{model_name}"
@@ -38,7 +46,12 @@ def _get_crew_llm() -> Optional[LLM]:
         )
     except Exception as e:
         logger.warning("crew_llm_setup_error", error=str(e))
-        return None
+        return LLM(
+            model="openai/gpt-oss-20b",
+            base_url=base_url,
+            api_key=api_key,
+            temperature=0.2,
+        )
 
 
 def create_requirement_analyst_agent() -> Agent:

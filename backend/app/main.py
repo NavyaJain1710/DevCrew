@@ -21,6 +21,11 @@ from app.services.ws_hub import ws_hub
 logger = structlog.get_logger(__name__)
 settings = get_settings()
 
+import os
+# Ensure CrewAI has an OPENAI_API_KEY in environment so it doesn't fail import
+if not os.environ.get("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = settings.groq_api_key or os.getenv("GROQ_API_KEY") or "gsk_dummy_key_for_groq"
+
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
