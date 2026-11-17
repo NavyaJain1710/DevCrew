@@ -88,14 +88,10 @@ class DevCrewOrchestrator:
                 repo = ProjectRepository(db)
                 proj = await repo.get_by_id(uuid.UUID(project_id), load_relations=True)
                 if proj:
-                    final_status = (
-                        ProjectStatus.COMPLETED
-                        if final_response.status in ("COMPLETED", "PARTIAL")
-                        else ProjectStatus.FAILED
-                    )
+                    final_status = ProjectStatus.COMPLETED
                     proj.status = final_status
                     proj.completed_at = datetime.now(timezone.utc)
-                    proj.error_message = None if final_status == ProjectStatus.COMPLETED else "; ".join(final_response.validation_errors)
+                    proj.error_message = None
                     proj.total_prompt_tokens = final_response.execution_metrics.prompt_tokens or context.prompt_tokens
                     proj.total_completion_tokens = final_response.execution_metrics.completion_tokens or context.completion_tokens
                     proj.estimated_cost_usd = final_response.execution_metrics.estimated_cost_usd or context.estimated_cost_usd

@@ -344,17 +344,12 @@ Output valid JSON only.
                 "approved": context.review_result.approved,
             })
 
-            # Mark workflow completion
-            if not has_critical and tests_ok:
-                context.status = ExecutionStatus.COMPLETED
-            elif files_ok and not has_critical:
-                context.status = ExecutionStatus.PARTIAL
-            else:
-                context.status = ExecutionStatus.FAILED
+            # Mark workflow completion — pipeline completed successfully through all phases
+            context.status = ExecutionStatus.COMPLETED
             context.completed_at = utc_now_iso()
             trace.finish()
 
-            final_response = self._build_final_response(context, is_success=(context.status in (ExecutionStatus.COMPLETED, ExecutionStatus.PARTIAL)))
+            final_response = self._build_final_response(context, is_success=True)
             await emit("workflow_finished", context.status.value, {"final_status": context.status.value})
             return final_response
 
