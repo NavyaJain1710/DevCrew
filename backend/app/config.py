@@ -54,13 +54,14 @@ class Settings(BaseSettings):
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai"
 
     # ── Model Routing ───────────────────────────────────────────────────────
-    primary_model: str = "anthropic/claude-3-5-sonnet"
-    primary_provider: str = "openrouter"
+    # Defaults to Groq (free tier) — override via environment variables in production
+    primary_model: str = "llama-3.3-70b-versatile"
+    primary_provider: str = "groq"
 
-    coding_model: str = "qwen/qwen2.5-coder-32b-instruct"
-    coding_provider: str = "openrouter"
+    coding_model: str = "llama-3.3-70b-versatile"
+    coding_provider: str = "groq"
 
-    fast_model: str = "meta-llama/llama-3.1-8b-instruct"
+    fast_model: str = "llama-3.1-8b-instant"
     fast_provider: str = "groq"
 
     # ── ChromaDB ────────────────────────────────────────────────────────────

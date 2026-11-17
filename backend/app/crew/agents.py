@@ -26,7 +26,11 @@ def _get_crew_llm() -> LLM:
     """Provide configured CrewAI LLM pointing to Groq's OpenAI-compatible endpoint."""
     import os
     base_url = settings.groq_base_url or "https://api.groq.com/openai/v1"
-    api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY") or "gsk_dummy_key_for_groq"
+    api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY") or ""
+
+    if not api_key:
+        logger.error("crew_llm_no_api_key", msg="GROQ_API_KEY is not set! Agents will fail.")
+        api_key = "missing-groq-key"
 
     # Always ensure OPENAI_API_KEY is in environment for CrewAI native provider check
     if not os.environ.get("OPENAI_API_KEY"):
@@ -34,21 +38,30 @@ def _get_crew_llm() -> LLM:
     if not os.environ.get("OPENAI_API_BASE"):
         os.environ["OPENAI_API_BASE"] = base_url
 
+    # Use primary_model from settings, but strip any "openai/" prefix for Groq
+    model_name = settings.primary_model
+    # Remove provider prefix if present (e.g. "openai/gpt-oss-20b" -> "gpt-oss-20b")
+    # For Groq, we use "groq/<model>" format for CrewAI LLM
+    if "/" in model_name:
+        # Keep the model as-is if it's a known path, otherwise strip provider prefix
+        bare_name = model_name.split("/", 1)[1]
+    else:
+        bare_name = model_name
+
+    # CrewAI uses "groq/<model>" to route via LiteLLM to Groq
+    crew_model = f"groq/{bare_name}"
+
     try:
-        model_name = settings.primary_model
-        if not model_name.startswith("openai/"):
-            model_name = f"openai/{model_name}"
         return LLM(
-            model=model_name,
-            base_url=base_url,
+            model=crew_model,
             api_key=api_key,
             temperature=0.2,
         )
     except Exception as e:
-        logger.warning("crew_llm_setup_error", error=str(e))
+        logger.warning("crew_llm_setup_error", error=str(e), model=crew_model)
+        # Hardcoded safe fallback — llama-3.3-70b is free on Groq
         return LLM(
-            model="openai/gpt-oss-20b",
-            base_url=base_url,
+            model="groq/llama-3.3-70b-versatile",
             api_key=api_key,
             temperature=0.2,
         )

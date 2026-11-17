@@ -28,9 +28,21 @@ services:
         value: https://devcrew-frontend.onrender.com
       - key: OPENAI_API_KEY
         value: na-using-groq
-      - key: OPENROUTER_API_KEY
-        sync: false
+      - key: PRIMARY_PROVIDER
+        value: groq
+      - key: PRIMARY_MODEL
+        value: llama-3.3-70b-versatile
+      - key: CODING_PROVIDER
+        value: groq
+      - key: CODING_MODEL
+        value: llama-3.3-70b-versatile
+      - key: FAST_PROVIDER
+        value: groq
+      - key: FAST_MODEL
+        value: llama-3.1-8b-instant
       - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: GEMINI_API_KEY
         sync: false
